@@ -108,7 +108,7 @@ class WaveCanvas(tk.Canvas):
                 if y != y2: self.create_line(x2, y, x2, y2, fill=C_TEXT2, width=1)
             x = x2
 
-# ─── Painel Host A (Envio) ────────────────────────────────────────────────────
+# ─── Painel Host A (Envio - Slaves) ───────────────────────────────────────────
 class PainelEnvio(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent, bg=C_BG)
@@ -118,8 +118,8 @@ class PainelEnvio(tk.Frame):
     def _build(self):
         hdr = tk.Frame(self, bg=C_BG)
         hdr.pack(fill="x", padx=24, pady=(20, 12))
-        tk.Label(hdr, text="Host A", bg=C_BG, fg=C_ACCENT, font=FONT_TITLE).pack(side="left")
-        tk.Label(hdr, text="  envio e codificação B8ZS", bg=C_BG, fg=C_TEXT2, font=("Segoe UI", 11)).pack(side="left", anchor="s", pady=(0, 3))
+        tk.Label(hdr, text="Host A (Slave)", bg=C_BG, fg=C_ACCENT, font=FONT_TITLE).pack(side="left")
+        tk.Label(hdr, text="  envio exclusivo para o Master", bg=C_BG, fg=C_TEXT2, font=("Segoe UI", 11)).pack(side="left", anchor="s", pady=(0, 3))
 
         row1 = tk.Frame(self, bg=C_BG)
         row1.pack(fill="x", padx=24, pady=4)
@@ -131,17 +131,14 @@ class PainelEnvio(tk.Frame):
         self.txt_msg = make_text(f_msg, height=4)
         self.txt_msg.pack(fill="x")
 
-        c_net, f_net = make_card(row1, "Conexão e Destino")
+        c_net, f_net = make_card(row1, "Conexão Local")
         c_net.grid(row=0, column=1, sticky="nsew")
 
         tk.Label(f_net, text="Porta COM Local (ex: COM3)", bg=C_CARD, fg=C_TEXT2, font=FONT_LABEL, anchor="w").pack(fill="x")
         self.e_porta = make_entry(f_net, "COM3", width=20)
         self.e_porta.pack(fill="x", pady=(2, 8))
-
-        tk.Label(f_net, text="Nó Destino", bg=C_CARD, fg=C_TEXT2, font=FONT_LABEL, anchor="w").pack(fill="x")
-        self.combo_dest = ttk.Combobox(f_net, values=["Master", "Slave 1", "Slave 2"], state="readonly")
-        self.combo_dest.current(1) # Padrão: Enviar para Slave 1
-        self.combo_dest.pack(fill="x", pady=(2, 0))
+        
+        tk.Label(f_net, text="Destino fixado: Master", bg=C_CARD, fg=C_ACCENT, font=FONT_BADGE, anchor="w").pack(fill="x", pady=(8, 0))
 
         f_btns = tk.Frame(self, bg=C_BG)
         f_btns.pack(fill="x", padx=24, pady=8)
@@ -191,20 +188,20 @@ class PainelEnvio(tk.Frame):
             messagebox.showwarning("Atenção", "Processe uma mensagem antes de enviar."); return
         
         porta_com = self.e_porta.get().strip()
-        id_dest = self.combo_dest.current() # 0, 1, ou 2
 
         self.lbl_status.config(text="⏳ enviando...", fg=C_TEXT2)
         self.update_idletasks()
 
         def _t():
             try:
-                enviar_niveis(porta_com, id_dest, self._niveis)
-                self.after(0, lambda: self.lbl_status.config(text=f"✓ enviado → {self.combo_dest.get()}", fg=C_ACCENT2))
+                # ID 0 = Envia obrigatoriamente para o Master
+                enviar_niveis(porta_com, 0, self._niveis)
+                self.after(0, lambda: self.lbl_status.config(text="✓ enviado → Master", fg=C_ACCENT2))
             except Exception as e:
-                self.after(0, lambda: (self.lbl_status.config(text=f"✗ falha", fg=C_WARN), messagebox.showerror("Erro na Serial", str(e))))
+                self.after(0, lambda: (self.lbl_status.config(text="✗ falha", fg=C_WARN), messagebox.showerror("Erro na Serial", str(e))))
         threading.Thread(target=_t, daemon=True).start()
 
-# ─── Painel Host B (Recepção) ─────────────────────────────────────────────────
+# ─── Painel Host B (Recepção - Master) ────────────────────────────────────────
 class PainelRecepcao(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent, bg=C_BG)
@@ -214,8 +211,8 @@ class PainelRecepcao(tk.Frame):
     def _build(self):
         hdr = tk.Frame(self, bg=C_BG)
         hdr.pack(fill="x", padx=24, pady=(20, 12))
-        tk.Label(hdr, text="Host B", bg=C_BG, fg=C_ACCENT2, font=FONT_TITLE).pack(side="left")
-        tk.Label(hdr, text="  recepção e decodificação B8ZS", bg=C_BG, fg=C_TEXT2, font=("Segoe UI", 11)).pack(side="left", anchor="s", pady=(0, 3))
+        tk.Label(hdr, text="Host B (Master)", bg=C_BG, fg=C_ACCENT2, font=FONT_TITLE).pack(side="left")
+        tk.Label(hdr, text="  escuta central e decodificação B8ZS", bg=C_BG, fg=C_TEXT2, font=("Segoe UI", 11)).pack(side="left", anchor="s", pady=(0, 3))
 
         row1 = tk.Frame(self, bg=C_BG)
         row1.pack(fill="x", padx=24, pady=4)
@@ -331,7 +328,11 @@ class App(tk.Tk):
         tk.Frame(sb, bg="#2E3E52", height=1).pack(fill="x", padx=16, pady=8)
 
         self._nav_btns = {}
-        nav_items = [("envio", "📤  Host A — Envio", PainelEnvio), ("recepcao", "📥  Host B — Recepção", PainelRecepcao)]
+        # Navegação atualizada para refletir claramente a arquitetura Estrela
+        nav_items = [
+            ("envio", "📤  Envio — Slaves", PainelEnvio), 
+            ("recepcao", "📥 Recepção — Master", PainelRecepcao)
+        ]
         for key, label, cls in nav_items:
             b = tk.Button(sb, text=label, bg=C_SIDEBAR, fg=C_SIDEBAR_T, font=("Segoe UI", 10), relief="flat", bd=0, cursor="hand2", anchor="w", padx=20, pady=10, activebackground="#2E3E52", activeforeground=C_SIDEBAR_A, command=lambda k=key: self._nav(k))
             b.pack(fill="x")
