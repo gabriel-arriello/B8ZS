@@ -13,7 +13,7 @@ uint8_t macSlave2[] = {0xE0, 0x8C, 0xFE, 0xE5, 0x83, 0x04};
 
 esp_now_peer_info_t peerInfo;
 
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {}
+// O callback OnDataSent foi removido pois não é utilizado e causava conflito de versão.
 
 void OnDataRecv(const esp_now_recv_info *info, const uint8_t *incomingData, int len) {
   // Descobre quem enviou a mensagem analisando o MAC de origem
@@ -40,7 +40,7 @@ void setup() {
 
   if (esp_now_init() != ESP_OK) return;
 
-  esp_now_register_send_cb(OnDataSent);
+  // Registra apenas o callback de recepção
   esp_now_register_recv_cb(OnDataRecv);
 
   // O Master conhece os Slaves. Os Slaves conhecem apenas o Master.
@@ -65,6 +65,7 @@ void loop() {
     Serial.readBytes(len_buf, 4);
     uint32_t payload_len = (len_buf[0] << 24) | (len_buf[1] << 16) | (len_buf[2] << 8) | len_buf[3];
 
+    // Limite de segurança para o pacote do ESP-NOW
     if (payload_len > 0 && payload_len <= 240) {
       uint8_t payload[240];
       int bytes_lidos = Serial.readBytes(payload, payload_len);
