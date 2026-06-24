@@ -131,22 +131,10 @@ class PainelEnvio(tk.Frame):
         self.txt_msg = make_text(f_msg, height=4)
         self.txt_msg.pack(fill="x")
 
-        # Contador de caracteres
-        self.lbl_char_count = tk.Label(
-            f_msg, text="0/80",
-            bg=C_CARD, fg=C_TEXT2,
-            font=("Segoe UI", 8), anchor="e"
-        )
-        self.lbl_char_count.pack(fill="x", pady=(2, 0))
-
-        # Bind para atualizar contador e travar em 80
-        self.txt_msg.bind("<KeyPress>", self._on_msg_keypress)
-        self.txt_msg.bind("<<Paste>>", self._on_msg_paste)
-
         c_net, f_net = make_card(row1, "Conexão Local")
         c_net.grid(row=0, column=1, sticky="nsew")
 
-        tk.Label(f_net, text="Porta COM Local (ex: COM13)", bg=C_CARD, fg=C_TEXT2, font=FONT_LABEL, anchor="w").pack(fill="x")
+        tk.Label(f_net, text="Porta COM Local (ex: COM3)", bg=C_CARD, fg=C_TEXT2, font=FONT_LABEL, anchor="w").pack(fill="x")
         self.e_porta = make_entry(f_net, "COM13", width=20)
         self.e_porta.pack(fill="x", pady=(2, 8))
         
@@ -178,50 +166,10 @@ class PainelEnvio(tk.Frame):
         self.wave = WaveCanvas(f_wave, height=90)
         self.wave.pack(fill="x")
 
-    def _update_char_count(self):
-        texto = self.txt_msg.get("1.0", "end-1c")
-        n = len(texto)
-        self.lbl_char_count.config(
-            text=f"{n}/80",
-            fg=C_WARN if n >= 80 else C_ACCENT if n >= 60 else C_TEXT2
-        )
-
-    def _on_msg_keypress(self, event):
-        # Permite teclas de controle e apagar sempre
-        if event.keysym in ("BackSpace", "Delete", "Left", "Right", "Up", "Down",
-                            "Home", "End", "Return", "Tab", "Control_L", "Control_R",
-                            "Shift_L", "Shift_R", "Alt_L", "Alt_R"):
-            self.after(1, self._update_char_count)
-            return
-
-        # Ctrl+A, Ctrl+C, Ctrl+Z etc. — deixa passar
-        if event.state & 0x4:
-            self.after(1, self._update_char_count)
-            return
-
-        # Bloqueia nova digitação se já está em 80 caracteres
-        texto = self.txt_msg.get("1.0", "end-1c")
-        if len(texto) >= 80:
-            return "break"  # Cancela o evento (não insere o char)
-
-        self.after(1, self._update_char_count)
-
-    def _on_msg_paste(self, event):
-        # Trata paste: trunca se passar de 80 após colar
-        def _truncar():
-            texto = self.txt_msg.get("1.0", "end-1c")
-            if len(texto) > 80:
-                self.txt_msg.delete("1.0", "end")
-                self.txt_msg.insert("1.0", texto[:80])
-            self._update_char_count()
-        self.after(1, _truncar)
-
     def _processar(self):
         msg = self.txt_msg.get("1.0", "end").strip()
         if not msg:
             messagebox.showwarning("Atenção", "Digite uma mensagem."); return
-        if len(msg) > 80:
-            messagebox.showwarning("Atenção", "A mensagem não pode ultrapassar 80 caracteres."); return
         try:
             enc = criptografar(msg)
             bin_ = bytes_para_binario(enc)
@@ -293,6 +241,10 @@ class PainelRecepcao(tk.Frame):
         self.txt_nivs = make_text(f_in, height=4, color=C_ACCENT2)
         self.txt_nivs.pack(fill="x")
 
+        f_btns = tk.Frame(self, bg=C_BG)
+        f_btns.pack(fill="x", padx=24, pady=8)
+        btn(f_btns, "▶  Decodificar", color=C_ACCENT2, cmd=self._processar).pack(side="left")
+
         c_wave, f_wave = make_card(self, "forma de onda recebida — host b")
         c_wave.pack(fill="x", padx=24, pady=(4, 8))
         self.wave = WaveCanvas(f_wave, height=90)
@@ -342,7 +294,6 @@ class PainelRecepcao(tk.Frame):
     def _processar(self):
         raw = self.txt_nivs.get("1.0", "end").strip()
         if not raw: return
-
         try:
             niveis = [int(x) for x in raw.split()]
             self.after(80, lambda: self.wave.set(niveis))
