@@ -342,8 +342,7 @@ class PainelRecepcao(tk.Frame):
     def _processar(self):
         raw = self.txt_nivs.get("1.0", "end").strip()
         if not raw: return
-        if len(msg) > 80:
-            messagebox.showwarning("Atenção", "A mensagem não pode ultrapassar 80 caracteres."); return
+
         try:
             niveis = [int(x) for x in raw.split()]
             self.after(80, lambda: self.wave.set(niveis))
