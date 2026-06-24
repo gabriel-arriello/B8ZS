@@ -134,8 +134,8 @@ class PainelEnvio(tk.Frame):
         c_net, f_net = make_card(row1, "Conexão Local")
         c_net.grid(row=0, column=1, sticky="nsew")
 
-        tk.Label(f_net, text="Porta COM Local (ex: COM3)", bg=C_CARD, fg=C_TEXT2, font=FONT_LABEL, anchor="w").pack(fill="x")
-        self.e_porta = make_entry(f_net, "COM3", width=20)
+        tk.Label(f_net, text="Porta COM Local (ex: /dev/ttyUSB0)", bg=C_CARD, fg=C_TEXT2, font=FONT_LABEL, anchor="w").pack(fill="x")
+        self.e_porta = make_entry(f_net, "/dev/ttyUSB0", width=20)
         self.e_porta.pack(fill="x", pady=(2, 8))
         
         tk.Label(f_net, text="Destino fixado: Master", bg=C_CARD, fg=C_ACCENT, font=FONT_BADGE, anchor="w").pack(fill="x", pady=(8, 0))
@@ -170,6 +170,8 @@ class PainelEnvio(tk.Frame):
         msg = self.txt_msg.get("1.0", "end").strip()
         if not msg:
             messagebox.showwarning("Atenção", "Digite uma mensagem."); return
+        if len(msg) > 80:
+            messagebox.showwarning("Atenção", "A mensagem não pode ultrapassar 80 caracteres."); return
         try:
             enc = criptografar(msg)
             bin_ = bytes_para_binario(enc)
@@ -223,7 +225,7 @@ class PainelRecepcao(tk.Frame):
         c_srv.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
 
         tk.Label(f_srv, text="Porta COM Local", bg=C_CARD, fg=C_TEXT2, font=FONT_LABEL, anchor="w").pack(fill="x")
-        self.e_porta_srv = make_entry(f_srv, "COM4", width=10)
+        self.e_porta_srv = make_entry(f_srv, "/dev/ttyUSB0", width=10)
         self.e_porta_srv.pack(fill="x", pady=(2, 10))
 
         self.btn_srv = btn(f_srv, "▶  Iniciar", color=C_ACCENT2, cmd=self._toggle)
@@ -240,10 +242,6 @@ class PainelRecepcao(tk.Frame):
         
         self.txt_nivs = make_text(f_in, height=4, color=C_ACCENT2)
         self.txt_nivs.pack(fill="x")
-
-        f_btns = tk.Frame(self, bg=C_BG)
-        f_btns.pack(fill="x", padx=24, pady=8)
-        btn(f_btns, "▶  Decodificar", color=C_ACCENT2, cmd=self._processar).pack(side="left")
 
         c_wave, f_wave = make_card(self, "forma de onda recebida — host b")
         c_wave.pack(fill="x", padx=24, pady=(4, 8))
