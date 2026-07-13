@@ -8,9 +8,9 @@ import sys, os, threading
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from Backend.crypto import criptografar, descriptografar, bytes_para_binario, binario_para_bytes
-from Backend.b8zs import codificar, decodificar
-from Backend.rede import Servidor, enviar_niveis
+from backend.crypto import criptografar, descriptografar, bytes_para_binario, binario_para_bytes
+from backend.b8zs import codificar, decodificar
+from backend.rede import Servidor, enviar_niveis
 
 # ─── Paleta ──────────────────────────────────────────────────────────────────
 C_BG        = "#F0F2F5"   

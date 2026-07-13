@@ -1,6 +1,6 @@
 import threading
 import struct
-import serial # Requer: pip install pyserial
+import serial
 
 BAUDRATE = 115200
 TIMEOUT = 10
