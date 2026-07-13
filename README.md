@@ -67,12 +67,11 @@ python app.py
 
 ## Equipe
 
-- [Adicionar nomes dos integrantes]
+- Deborah Feijó Pinto
+- Felipe Sledz Ferreira
+- Gabriel Arriello Santana
 
 ## Disciplina
 
-Projeto desenvolvido para a disciplina de Transmissão Digital — UTFPR.
+Projeto desenvolvido para a disciplina de Comunicação de Dados — UTFPR.
 
-## Licença
-
-[Definir licença, ex: MIT]
